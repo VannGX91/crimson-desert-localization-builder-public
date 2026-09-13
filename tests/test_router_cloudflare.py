@@ -33,6 +33,10 @@ def test_system_edge_discovery_env_and_path(tmp_path, monkeypatch):
 
     # Discovery via PATH env
     monkeypatch.delenv("EDGE_PATH", raising=False)
+    monkeypatch.setattr(
+        "crimson0020.translation_runtime.router.browser_worker.SYSTEM_EDGE_CANDIDATE_PATHS",
+        (),
+    )
     monkeypatch.setenv("PATH", f"{tmp_path}{os.pathsep}C:\\Windows")
     found_path = find_system_edge_executable()
     assert found_path == fake_edge.resolve()

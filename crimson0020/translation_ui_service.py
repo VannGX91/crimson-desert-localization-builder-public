@@ -374,10 +374,19 @@ class TranslationUIService:
             response.update(copy.deepcopy(dict(extra)))
         return response
 
-    def _error(self, code: str, summary: str, detail: object) -> dict[str, object]:
+    def _error(
+        self,
+        code: str,
+        summary: str,
+        detail: object,
+        *,
+        job_state: str | None = None,
+    ) -> dict[str, object]:
         diagnostic = f"{type(detail).__name__}: {detail}"
         error = {"code": code, "summary": summary, "detail": diagnostic, "message": summary}
         with self._lock:
+            if job_state is not None:
+                self._job = {**self._job, "state": job_state}
             self._last_error = {key: str(value) for key, value in error.items()}
         return self._response(False, error=error)
 
@@ -753,9 +762,12 @@ class TranslationUIService:
                 control,
             )
         except Exception as error:
-            with self._lock:
-                self._job = {**self._job, "state": "failed"}
-            self._error("job_failed", "Bản dịch gặp lỗi; các dòng đã lưu vẫn được giữ lại.", error)
+            self._error(
+                "job_failed",
+                "Bản dịch gặp lỗi; các dòng đã lưu vẫn được giữ lại.",
+                error,
+                job_state="failed",
+            )
             return
         with self._lock:
             paused = control.should_pause_after_request()

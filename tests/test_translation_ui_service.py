@@ -329,6 +329,45 @@ class TranslationUIServiceTests(TestCase):
         self.assertEqual("failed", state["state"]["state"])
         self.assertEqual("job_failed", state["state"]["error"]["code"])
 
+    def test_job_failure_state_and_error_publish_atomically(self) -> None:
+        error_entered = threading.Event()
+        release_error = threading.Event()
+
+        with TemporaryDirectory() as temp_dir:
+            base = Path(temp_dir)
+            valid = base / "valid.translation-delta.json"
+            _delta(valid)
+
+            def failing_runner(*_args):
+                raise RuntimeError("synthetic runner failure")
+
+            failed = TranslationUIService(base, runner=failing_runner)
+            self.assertTrue(failed.select_input(valid)["ok"])
+            self.assertTrue(failed.select_output(base / "failed.json")["ok"])
+            original_error = failed._error
+
+            def delayed_error(code, summary, detail, **kwargs):
+                error_entered.set()
+                self.assertTrue(release_error.wait(5))
+                return original_error(code, summary, detail, **kwargs)
+
+            with patch.object(failed, "_error", side_effect=delayed_error):
+                self.assertTrue(failed.start()["ok"])
+                self.assertTrue(error_entered.wait(5))
+                in_transition = failed.refresh()["state"]
+                release_error.set()
+                worker = failed._thread
+                self.assertIsNotNone(worker)
+                worker.join(5)
+
+            self.assertFalse(worker.is_alive())
+            final = failed.refresh()["state"]
+
+        self.assertEqual("running", in_transition["state"])
+        self.assertIsNone(in_transition["error"])
+        self.assertEqual("failed", final["state"])
+        self.assertEqual("job_failed", final["error"]["code"])
+
 
     def test_knowledge_pagination_search_and_import_export_are_bounded(self) -> None:
         with TemporaryDirectory() as temp_dir:
