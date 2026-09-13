@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="vi" data-theme="crimson">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' data:; style-src 'self'; script-src 'self' 'unsafe-eval'; img-src 'self' data:; connect-src 'none'; object-src 'none'; frame-src 'none'">
+  <title>Crimson Desert Localization Builder v2.0.0</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <div class="app-shell">
+    <header class="titlebar">
+      <div class="title-copy">
+        <span>Crimson Desert Localization Builder</span>
+        <span class="version" id="versionLabel">v2.0.0</span>
+      </div>
+      <div class="title-actions">
+        <label class="language-picker">
+          <span class="sr-only">Ngôn ngữ nguồn</span>
+          <select id="languageSelect" aria-label="Ngôn ngữ nguồn"></select>
+        </label>
+        <div class="theme-switcher" id="themeSwitcher">
+          <button class="theme-trigger" id="themeTrigger" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="themeMenu">
+            <span class="theme-current-dot" aria-hidden="true"></span>
+            <span id="themeName">Crimson Glass</span>
+            <span class="chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="theme-menu" id="themeMenu" role="menu" aria-label="Giao diện">
+            <div class="theme-menu-head">Appearance</div>
+            <button class="theme-option active" type="button" data-theme-choice="crimson" role="menuitemradio" aria-checked="true" tabindex="-1">
+              <span class="theme-swatch crimson"></span>
+              <span><strong>Crimson Glass</strong><small>plum / violet</small></span>
+              <span class="theme-check">✓</span>
+            </button>
+            <button class="theme-option" type="button" data-theme-choice="rose-teal" role="menuitemradio" aria-checked="false" tabindex="-1">
+              <span class="theme-swatch rose-teal"></span>
+              <span><strong>Rose–Teal Split</strong><small>teal glass · rose accent</small></span>
+              <span class="theme-check">✓</span>
+            </button>
+            <button class="theme-option" type="button" data-theme-choice="pearl-light" role="menuitemradio" aria-checked="false" tabindex="-1">
+              <span class="theme-swatch pearl"></span>
+              <span><strong>Pearl Light</strong><small>light glass · lilac pearl</small></span>
+              <span class="theme-check">✓</span>
+            </button>
+            <button class="theme-option" type="button" data-theme-choice="crystal-clear" role="menuitemradio" aria-checked="false" tabindex="-1">
+              <span class="theme-swatch clear"></span>
+              <span><strong>Crystal Clear</strong><small>near-transparent · aurora</small></span>
+              <span class="theme-check">✓</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="compatibility-warning" id="compatibilityWarning" role="alert" hidden>
+      Giao diện hiện đại yêu cầu Microsoft Edge WebView2 Runtime. Hãy cài WebView2 rồi mở lại tool.
+    </div>
+
+    <div class="workspace">
+      <aside class="sidebar">
+        <nav class="nav" aria-label="Điều hướng công cụ">
+          <button class="nav-item active" type="button" data-page="source"><span>◉</span><b>Dữ liệu nguồn</b></button>
+          <button class="nav-item" type="button" data-page="unpack"><span>⇣</span><b>Unpack</b></button>
+          <button class="nav-item" type="button" data-page="repack"><span>⟳</span><b>Repack</b></button>
+          <button class="nav-item" type="button" data-page="translate"><span>文</span><b>Auto Translate</b></button>
+          <button class="nav-item" type="button" data-page="font"><span>A</span><b>Font</b></button>
+          <button class="nav-item" type="button" data-page="install"><span>⇩</span><b>Install</b></button>
+          <button class="nav-item" type="button" data-page="uninstall"><span>↶</span><b>Uninstall / Restore</b></button>
+        </nav>
+        <div class="build-mark">
+          <strong>CRIMSON DESERT</strong>
+          <span>LOCALIZATION BUILDER</span>
+          <i aria-hidden="true"></i>
+        </div>
+      </aside>
+
+      <main>
+        <div class="content-grid">
+          <section class="workflow" aria-label="Công cụ đang chọn">
+            <article class="page active" id="source" data-page="source" data-context="Thiết lập package localization và font nguồn">
+              <div class="tool-card">
+                <div class="tool-head"><div><h1><i></i>Dữ liệu nguồn</h1><p>Thiết lập các package nguồn dùng xuyên suốt quá trình localization.</p></div><span class="tool-meta">SOURCE</span></div>
+                <div class="form-surface">
+                  <div class="form-row"><label for="field-source">Package localization nguồn</label><input id="field-source" readonly><button class="ghost" type="button" data-browse="source">Duyệt…</button></div>
+                  <div class="form-row"><label for="field-font_source">Font 0012 nguồn</label><input id="field-font_source" readonly><button class="ghost" type="button" data-browse="font_source">Duyệt…</button></div>
+                </div>
+                <p class="hint">Các công cụ Unpack, Repack và Font sử dụng lại những đường dẫn này.</p>
+              </div>
+            </article>
+
+            <article class="page" id="unpack" data-page="unpack" data-context="Giải nén localization package thành JSON phẳng">
+              <div class="tool-card">
+                <div class="tool-head"><div><h1><i></i>Unpack</h1><p>Giải nén localization package thành dữ liệu JSON dễ đọc và chỉnh sửa.</p></div><span class="tool-meta">PACKAGE → JSON</span></div>
+                <div class="form-surface">
+                  <button class="action" type="button" data-operation="unpack">UNPACK PACKAGE → JSON</button>
+                  <div class="form-row four"><label for="field-unpack_output">Thư mục đầu ra</label><input id="field-unpack_output" readonly><button class="ghost" type="button" data-browse="unpack_output">Duyệt…</button><button class="ghost open" type="button" data-open="unpack_output">Mở</button></div>
+                </div>
+                <p class="hint">Output mặc định được giữ riêng để không ghi đè dữ liệu nguồn.</p>
+              </div>
+            </article>
+
+            <article class="page" id="repack" data-page="repack" data-context="Đóng gói JSON theo cấu trúc package hiện tại">
+              <div class="tool-card">
+                <div class="tool-head"><div><h1><i></i>Repack</h1><p>Ánh xạ bản dịch bằng marker + key và dựng lại toàn bộ PALOC an toàn.</p></div><span class="tool-meta">JSON → PACKAGE</span></div>
+                <div class="form-surface">
+                  <button class="action" type="button" data-operation="repack">REPACK JSON → PACKAGE</button>
+                  <div class="form-row"><label for="field-json">JSON để Repack</label><input id="field-json" readonly><button class="ghost" type="button" data-browse="json">Duyệt…</button></div>
+                  <div class="form-row four"><label for="field-repack_output">Thư mục đầu ra</label><input id="field-repack_output" readonly><button class="ghost" type="button" data-browse="repack_output">Duyệt…</button><button class="ghost open" type="button" data-open="repack_output">Mở</button></div>
+                </div>
+                <p class="hint">Package đầu ra được xác minh lại trước khi dùng cho bước Install.</p>
+              </div>
+            </article>
+
+            <article class="page" id="translate" data-page="translate" data-context="Tạo file cần dịch, dịch tiếp và ghép vào JSON chính">
+              <div class="tool-card">
+                <div class="tool-head"><div><h1><i></i>Auto Translate</h1><p>Ba bước rõ ràng: tách câu cần dịch, dịch hết phần còn thiếu, rồi kiểm tra và ghép vào JSON chính.</p></div><span class="tool-meta">COMPARE → TRANSLATE → MERGE</span></div>
+                <div class="form-surface">
+                  <section class="translate-step" aria-labelledby="compareStepTitle">
+                    <h2 id="compareStepTitle"><span>1</span> Tạo file chỉ gồm câu cần dịch</h2>
+                    <p class="step-explanation">So sánh theo marker + key. File tạo ra chỉ có câu mới và câu có nội dung nguồn đã thay đổi; không chứa các câu không đổi hoặc toàn bộ catalog.</p>
+                    <div class="form-row"><label for="field-auto_old">JSON tiếng Việt của bản cũ</label><input id="field-auto_old" readonly><button class="ghost" type="button" data-browse="auto_old">Duyệt…</button></div>
+                    <div class="form-row"><label for="field-auto_new">JSON nguồn của bản mới</label><input id="field-auto_new" readonly><button class="ghost" type="button" data-browse="auto_new">Duyệt…</button></div>
+                    <div class="form-row four"><label for="field-auto_work">File chỉ gồm câu cần dịch</label><input id="field-auto_work" readonly><button class="ghost" type="button" data-browse="auto_work">Nơi lưu…</button><button class="ghost open" type="button" data-open="auto_work">Mở</button></div>
+                    <button class="action secondary-action" type="button" data-operation="prepare_translation">SO SÁNH &amp; TẠO FILE CẦN DỊCH<small>Không sửa hoặc ghi đè hai JSON đầu vào</small></button>
+                  </section>
+                  <section class="translate-step" aria-labelledby="translateStepTitle">
+                    <h2 id="translateStepTitle"><span>2</span> Dịch phần còn thiếu</h2>
+                    <p class="step-explanation">Chọn file cần dịch. Nếu một phản hồi bị lỗi, tool cô lập dòng lỗi, lưu các dòng đã xong và tiếp tục; bạn có thể đổi dịch vụ rồi chạy tiếp từ checkpoint.</p>
+                    <div class="form-row"><label for="field-auto_translate_input">Chọn file cần dịch</label><input id="field-auto_translate_input" readonly><button class="ghost" type="button" data-browse="auto_translate_input">Duyệt…</button></div>
+                    <div class="form-row"><label for="translationProvider">Dịch vụ dịch</label><select id="translationProvider" aria-describedby="providerDescription"></select><span class="field-spacer" aria-hidden="true"></span></div>
+                    <div class="provider-description" id="providerDescription"></div>
+                    <div class="translation-custom-config" id="translationCustomConfig" hidden>
+                      <div class="form-row"><label for="translationBaseUrl">Custom Base URL</label><input id="translationBaseUrl" type="text" inputmode="url" autocomplete="off" placeholder="Endpoint tương thích OpenAI"><span class="field-spacer" aria-hidden="true"></span></div>
+                      <div class="form-row"><label for="translationModel">Custom model</label><input id="translationModel" type="text" autocomplete="off" placeholder="Tên model"><span class="field-spacer" aria-hidden="true"></span></div>
+                      <div class="form-row"><label for="translationApiKey">Custom API key</label><input id="translationApiKey" type="password" autocomplete="off" spellcheck="false" placeholder="Chỉ giữ trong phiên; localhost có thể để trống"><span class="field-spacer" aria-hidden="true"></span></div>
+                      <div class="translation-advanced-card">
+                        <details class="translation-advanced-config" id="translationAdvancedConfig">
+                          <summary><span class="translation-advanced-title">Nâng cao</span><span class="translation-advanced-hint">Batch · concurrency · timeout</span></summary>
+                          <div class="translation-advanced-body">
+                            <div class="form-row"><label for="translationBatchItems">Dòng / batch</label><input id="translationBatchItems" type="number" min="1" max="2048" step="1" inputmode="numeric"><span class="field-spacer" aria-hidden="true"></span></div>
+                            <div class="form-row"><label for="translationBatchCharacters">Ký tự / batch</label><input id="translationBatchCharacters" type="number" min="128" max="1000000" step="1" inputmode="numeric"><span class="field-spacer" aria-hidden="true"></span></div>
+                            <div class="form-row"><label for="translationConcurrency">Request đồng thời</label><input id="translationConcurrency" type="number" min="1" max="16" step="1" inputmode="numeric"><span class="field-spacer" aria-hidden="true"></span></div>
+                            <div class="form-row"><label for="translationTimeout">Timeout (giây)</label><input id="translationTimeout" type="number" min="1" max="600" step="1" inputmode="numeric"><span class="field-spacer" aria-hidden="true"></span></div>
+                          </div>
+                        </details>
+                      </div>
+                      <label class="translation-secret-toggle" for="translationSaveApiKey">
+                        <input id="translationSaveApiKey" type="checkbox">
+                        <span class="translation-toggle-track" aria-hidden="true"><i></i></span>
+                        <span class="translation-secret-copy"><strong>Lưu API key vào file config</strong><small>Tắt: API key chỉ dùng trong phiên. Bật: key được ghi dạng text trong file JSON.</small></span>
+                      </label>
+                      <div class="translation-config-actions">
+                        <button class="ghost" id="translationConfigOpen" type="button">Mở thư mục config</button>
+                        <button class="ghost" id="translationConfigReload" type="button">Nạp config…</button>
+                        <button class="ghost" id="translationConfigSave" type="button">Lưu config</button>
+                      </div>
+                      <p class="translation-config-status" id="translationConfigStatus" role="status"></p>
+                    </div>
+                    <div class="form-row four"><label for="field-auto_output">File câu đã dịch</label><input id="field-auto_output" readonly><button class="ghost" type="button" data-browse="auto_output">Nơi lưu…</button><button class="ghost open" type="button" data-open="auto_output">Mở</button></div>
+                    <p class="step-readiness" id="translationWorkReadiness" role="status">Chọn file cần dịch để bắt đầu.</p>
+                    <div class="translation-progress" aria-label="Tiến độ dịch">
+                      <div><span>Tổng cần dịch</span><strong id="translationTotal">0</strong></div>
+                      <div><span>Đã lưu</span><strong id="translationSaved">0</strong></div>
+                      <div><span>Dùng lại checkpoint</span><strong id="translationCheckpointReuse">0</strong></div>
+                      <div><span>Dùng lại Translation Knowledge</span><strong id="translationTmReuse">0</strong></div>
+                      <div><span>Mới dịch</span><strong id="translationNewlyTranslated">0</strong></div>
+                      <div><span>Còn chờ</span><strong id="translationPending">0</strong></div>
+                      <div><span>Route hiện tại</span><strong id="translationCurrentRoute">—</strong></div>
+                      <div><span>Model hiện tại</span><strong id="translationCurrentModel">—</strong></div>
+                      <div><span>Số lần fallback</span><strong id="translationFallbacks">0</strong></div>
+                      <div><span>Cooldown</span><strong id="translationCooldown">—</strong></div>
+                      <div class="wide"><span>Lý do lỗi</span><strong id="translationFailureReason">—</strong></div>
+                    </div>
+                    <p class="translation-connection" id="translationConnectionStatus" role="status" aria-live="polite">Đang chờ trạng thái dịch.</p>
+                    <button class="action" id="autoTranslateAction" type="button">Start translation<small>Nếu một phản hồi bị lỗi, các dòng đã lưu vẫn được giữ lại.</small></button>
+                    <details class="translation-knowledge" id="translationKnowledgePanel">
+                      <summary>Translation Knowledge</summary>
+                      <div class="knowledge-summary" id="knowledgeSummary" role="status">Chưa tải dữ liệu ghi nhớ.</div>
+                      <div class="knowledge-toolbar">
+                        <div class="knowledge-search">
+                          <label for="knowledgeSearch">Tìm bản dịch đã ghi nhớ</label>
+                          <input id="knowledgeSearch" type="search" maxlength="240" autocomplete="off">
+                        </div>
+                        <button class="ghost" id="knowledgeSearchAction" type="button">Tìm</button>
+                        <button class="ghost" id="knowledgeImport" type="button">Import</button>
+                        <button class="ghost" id="knowledgeExport" type="button">Export</button>
+                      </div>
+                      <div class="knowledge-results" id="knowledgeResults" aria-live="polite"></div>
+                      <div class="knowledge-pagination" aria-label="Phân trang Translation Knowledge">
+                        <button class="ghost" id="knowledgePrev" type="button">Trang trước</button>
+                        <span id="knowledgePageStatus">Trang 1</span>
+                        <button class="ghost" id="knowledgeNext" type="button">Trang sau</button>
+                      </div>
+                    </details>
+                  </section>
+                  <section class="translate-step" aria-labelledby="mergeStepTitle">
+                    <h2 id="mergeStepTitle"><span>3</span> Kiểm tra, sửa cấu trúc và ghép</h2>
+                    <p class="step-explanation">Chọn file câu đã dịch. Tool giữ các bản dịch cũ còn khớp, kiểm tra với JSON nguồn mới và file mẫu từ bước 1, rồi tạo JSON đầy đủ dùng cho Repack.</p>
+                    <div class="form-row"><label for="field-auto_merge_input">File câu đã dịch để ghép</label><input id="field-auto_merge_input" readonly><button class="ghost" type="button" data-browse="auto_merge_input">Duyệt…</button></div>
+                    <div class="form-row four"><label for="field-auto_merge_output">JSON tiếng Việt hoàn chỉnh</label><input id="field-auto_merge_output" readonly><button class="ghost" type="button" data-browse="auto_merge_output">Nơi lưu…</button><button class="ghost open" type="button" data-open="auto_merge_output">Mở</button></div>
+                    <p class="step-readiness" id="translationMergeReadiness" role="status">Dịch xong file ở bước 2 rồi kiểm tra cấu trúc.</p>
+                    <div class="translation-merge-actions">
+                      <button class="action secondary-action" id="validateTranslationAction" type="button" data-operation="validate_translation">KIỂM TRA CẤU TRÚC</button>
+                      <button class="action alt" id="fixTranslationAction" type="button" data-operation="fix_translation_structure">FIX CẤU TRÚC<small>Tạo file đã sửa riêng, không ghi đè</small></button>
+                      <button class="action" id="mergeTranslationAction" type="button" data-operation="merge_translation">GHÉP VÀO JSON CHÍNH<small>Chỉ chạy khi cấu trúc hợp lệ và không còn câu thiếu</small></button>
+                    </div>
+                  </section>
+                </div>
+                <p class="hint">File lớn đầy đủ chỉ được tạo ở bước 3. Nếu dịch vụ hiện tại chậm hoặc lỗi, bạn có thể đổi dịch vụ và tiếp tục từ phần đã lưu.</p>
+              </div>
+            </article>
+
+            <article class="page" id="font" data-page="font" data-context="Quản lý package font 0012 cho tiếng Việt">
+              <div class="tool-card">
+                <div class="tool-head"><div><h1><i></i>Font</h1><p>Quản lý riêng package font 0012 để hỗ trợ đầy đủ ký tự tiếng Việt.</p></div><span class="tool-meta">0012 PACKAGE</span></div>
+                <div class="form-surface">
+                  <div class="dual-actions"><button class="action" type="button" data-operation="font_unpack">UNPACK FONT 0012</button><button class="action alt" type="button" data-operation="font_repack">REPACK FONT → 0012</button></div>
+                  <div class="form-row four"><label for="field-font_unpack_output">Font sau khi Unpack</label><input id="field-font_unpack_output" readonly><button class="ghost" type="button" data-browse="font_unpack_output">Duyệt…</button><button class="ghost open" type="button" data-open="font_unpack_output">Mở</button></div>
+                  <div class="form-row"><label for="field-font_repack_input">Font dùng để Repack</label><input id="field-font_repack_input" readonly><button class="ghost" type="button" data-browse="font_repack_input">Duyệt…</button></div>
+                  <div class="form-row four"><label for="field-font_repack_output">Package 0012 đầu ra</label><input id="field-font_repack_output" readonly><button class="ghost" type="button" data-browse="font_repack_output">Duyệt…</button><button class="ghost open" type="button" data-open="font_repack_output">Mở</button></div>
+                </div>
+                <p class="hint">Font được tách khỏi localization để dễ kiểm soát và thay thế.</p>
+              </div>
+            </article>
+
+            <article class="page" id="install" data-page="install" data-context="Cài package đã build với backup an toàn">
+              <div class="tool-card">
+                <div class="tool-head"><div><h1><i></i>Install</h1><p>Cài package Việt Hóa đã build vào game, kèm backup và xác minh metadata.</p></div><span class="tool-meta">MOD → GAME</span></div>
+                <div class="form-surface">
+                  <button class="action" type="button" data-operation="install">INSTALL MOD → GAME<small>Cài đặt Việt Hóa</small></button>
+                  <div class="form-row"><label for="field-install_source">Thư mục mod để cài</label><input id="field-install_source" readonly><button class="ghost" type="button" data-browse="install_source">Duyệt…</button></div>
+                  <div class="form-row"><label for="field-game">Thư mục game</label><input id="field-game" readonly><button class="ghost" type="button" data-browse="game">Duyệt…</button></div>
+                </div>
+                <p class="hint">Tool tạo backup riêng trước khi thay đổi package và metadata game.</p>
+              </div>
+            </article>
+
+            <article class="page" id="uninstall" data-page="uninstall" data-context="Phục hồi dữ liệu từ lần Install gần nhất">
+              <div class="tool-card danger-card">
+                <div class="tool-head"><div><h1><i></i>Uninstall / Restore</h1><p>Gỡ bản dịch và phục hồi đúng dữ liệu từ lần Install gần nhất.</p></div><span class="tool-meta">RESTORE</span></div>
+                <div class="form-surface">
+                  <button class="action alt" type="button" data-operation="uninstall">UNINSTALL / RESTORE<small>Gỡ cài đặt Việt Hóa</small></button>
+                  <div class="form-row"><label for="field-uninstall-game">Thư mục game</label><input id="field-uninstall-game" readonly><button class="ghost" type="button" data-browse="game">Duyệt…</button></div>
+                </div>
+                <p class="hint">Restore chỉ dùng backup hợp lệ đã được chính tool tạo ra.</p>
+              </div>
+            </article>
+          </section>
+
+          <aside class="status-rail" aria-label="Trạng thái và nhật ký">
+            <section class="status-card" aria-live="polite">
+              <div class="eyebrow">TRẠNG THÁI</div>
+              <div class="state"><span class="state-icon" id="statusIcon" aria-hidden="true"></span><strong id="statusTitle">ĐANG KHỞI TẠO</strong></div>
+              <div class="status-text" id="statusText">Đang kết nối giao diện với ứng dụng.</div>
+              <details id="statusDetails" hidden><summary>Chi tiết kỹ thuật</summary><pre id="statusDetail"></pre></details>
+              <div class="divider"></div>
+              <div class="context-label">ĐANG XEM</div>
+              <div class="context-row"><span class="context-icon" aria-hidden="true">◇</span><div><strong id="contextTitle">Dữ liệu nguồn</strong><small id="contextMeta">Thiết lập package localization và font nguồn</small></div></div>
+            </section>
+            <section class="monitor-card">
+              <div class="monitor-head"><span>MONITOR</span><small>SYSTEM LOG</small></div>
+              <div class="log" id="monitorLog" role="log" aria-live="polite"></div>
+            </section>
+          </aside>
+        </div>
+      </main>
+    </div>
+    <div class="busy-line" aria-hidden="true"><i></i></div>
+  </div>
+
+  <dialog class="knowledge-path-dialog" id="knowledgePathDialog" role="dialog" aria-modal="true" aria-labelledby="knowledgePathDialogTitle" aria-describedby="knowledgePathDialogHelp">
+    <div class="knowledge-path-dialog-card">
+      <h2 id="knowledgePathDialogTitle">Translation Knowledge</h2>
+      <p id="knowledgePathDialogHelp">Nhập đường dẫn tới file JSON dùng cho Translation Knowledge.</p>
+      <label for="knowledgePathInput">Đường dẫn file JSON</label>
+      <input id="knowledgePathInput" type="text" autocomplete="off" spellcheck="false">
+      <p class="knowledge-path-error" id="knowledgePathError" role="alert" aria-live="assertive"></p>
+      <div class="knowledge-path-dialog-actions">
+        <button class="ghost" id="knowledgePathCancel" type="button">Hủy</button>
+        <button class="action" id="knowledgePathConfirm" type="button">Xác nhận</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div class="toast" id="toast" role="alert" hidden></div>
+</body>
+</html>

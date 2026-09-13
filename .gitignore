@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.build-venv/
+
+# Tests and build output
+.coverage
+htmlcov/
+.pytest_cache/
+.ruff_cache/
+build/
+release/
+release_onedir_*/
+*.spec
+
+# Tool output and local settings
+output_*/
+fonts/
+config.json
+custom_openai_config.json
+translation-knowledge-v1*.sqlite3*
+*.autotranslate-checkpoint.jsonl
+*.autotranslate-failures.jsonl
+.env
+.env.*
+
+# Game data and generated binaries
+*.paz
+*.pamt
+*.papgt
+*.ttf
+*.otf
+*.exe
+*.dll
+*.lib
+*.pdb
+*.zip
+
+# Editors and Windows
+.idea/
+.vscode/
+Thumbs.db
+Desktop.ini

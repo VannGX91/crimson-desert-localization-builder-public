@@ -1,0 +1,91 @@
+name: Build and publish Windows release
+
+on:
+  push:
+    tags:
+      - "v2.0.0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: windows-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Check out tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: "3.13"
+
+      - name: Install locked build dependencies
+        run: python -m pip install --no-deps -r requirements-build.txt
+
+      - name: Verify tag and application version
+        shell: pwsh
+        run: |
+          python -c "import os, crimson0020; from crimson0020.webview_bridge import APPLICATION_VERSION; assert crimson0020.__version__ == APPLICATION_VERSION; assert os.environ['GITHUB_REF_NAME'] == f'v{APPLICATION_VERSION}'"
+
+      - name: Verify public source contents
+        run: python scripts/verify_public_source.py .
+
+      - name: Build native checksum library
+        run: python build_native.py
+
+      - name: Run tests
+        run: python -m unittest discover -s tests -v
+
+      - name: Compile Python source
+        run: python -m compileall -q app.py sitecustomize.py crimson0020 scripts tests
+
+      - name: Build and smoke-test Windows one-folder release
+        shell: pwsh
+        run: >-
+          python scripts/build_onedir.py
+          --output-root "$env:RUNNER_TEMP\crimson-release"
+
+      - name: Create release checksum
+        shell: pwsh
+        run: |
+          $releaseRoot = Join-Path $env:RUNNER_TEMP "crimson-release"
+          $zip = Join-Path $releaseRoot "CrimsonDesertLocalizationBuilder-windows-x64.zip"
+          $checksum = Join-Path $releaseRoot "SHA256SUMS.txt"
+          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $zip).Hash.ToLowerInvariant()
+          "$hash  CrimsonDesertLocalizationBuilder-windows-x64.zip" | Set-Content -LiteralPath $checksum -Encoding ascii
+          "RELEASE_ZIP=$zip" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "RELEASE_CHECKSUM=$checksum" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Publish GitHub release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view "$env:GITHUB_REF_NAME" --repo "$env:GITHUB_REPOSITORY" *> $null
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload "$env:GITHUB_REF_NAME" `
+              "$env:RELEASE_ZIP" `
+              "$env:RELEASE_CHECKSUM" `
+              --repo "$env:GITHUB_REPOSITORY" `
+              --clobber
+          } else {
+            gh release create "$env:GITHUB_REF_NAME" `
+              "$env:RELEASE_ZIP" `
+              "$env:RELEASE_CHECKSUM" `
+              --repo "$env:GITHUB_REPOSITORY" `
+              --verify-tag `
+              --title "Crimson Desert Localization Builder $env:GITHUB_REF_NAME" `
+              --notes "Windows x64 one-folder release. Extract the complete ZIP and keep _internal beside the executable."
+          }
+          if ($LASTEXITCODE -ne 0) {
+            throw "GitHub release publication failed."
+          }
