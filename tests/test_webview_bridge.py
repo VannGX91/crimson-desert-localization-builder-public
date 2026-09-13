@@ -394,6 +394,9 @@ class WebviewBridgeTests(unittest.TestCase):
                     "timeout_seconds": 150,
                 }
             )
+            expected_config_path = str(
+                (base / "custom_openai_config.json").resolve()
+            )
 
         self.assertTrue(response["ok"])
         self.assertEqual(
@@ -405,7 +408,7 @@ class WebviewBridgeTests(unittest.TestCase):
                 "max_batch_characters": 16000,
                 "concurrency": 2,
                 "timeout_seconds": 150.0,
-                "config_path": str(base / "custom_openai_config.json"),
+                "config_path": expected_config_path,
             },
             response["state"]["translation_config"],
         )
@@ -441,13 +444,15 @@ class WebviewBridgeTests(unittest.TestCase):
             }
             config_path.write_text(json.dumps(data), encoding="utf-8")
             reloaded = bridge.reload_translation_config_file()
+            expected_base = base.resolve()
+            expected_config_path = config_path.resolve()
 
-        self.assertEqual([base], opened)
+        self.assertEqual([expected_base], opened)
         self.assertEqual("translation_config", picked[0].field)
         self.assertEqual("file", picked[0].kind)
-        self.assertEqual(str(base), picked[0].initial_directory)
+        self.assertEqual(str(expected_base), picked[0].initial_directory)
         self.assertTrue(reloaded["ok"])
-        self.assertEqual(str(config_path), reloaded["config_path"])
+        self.assertEqual(str(expected_config_path), reloaded["config_path"])
         config = reloaded["state"]["translation_config"]
         self.assertEqual("edited-model", config["model"])
         self.assertEqual(128, config["max_batch_items"])
@@ -602,17 +607,18 @@ class WebviewBridgeTests(unittest.TestCase):
 
             response = bridge.start_operation("unpack")
             state = _wait_until_idle(bridge)
+            expected_source = (base / "0020").resolve()
+            expected_output = (
+                base / "output_unpack" / "localizationstring_eng.paloc.json"
+            ).resolve()
 
         self.assertTrue(response["ok"])
         self.assertFalse(state["busy"])
         self.assertEqual("success", state["status"]["level"])
         self.assertEqual("UNPACK THÀNH CÔNG", state["status"]["title"])
         self.assertEqual(1, len(calls))
-        self.assertEqual(base / "0020", Path(calls[0][0]))
-        self.assertEqual(
-            base / "output_unpack" / "localizationstring_eng.paloc.json",
-            Path(calls[0][1]),
-        )
+        self.assertEqual(expected_source, Path(calls[0][0]).resolve())
+        self.assertEqual(expected_output, Path(calls[0][1]).resolve())
         self.assertEqual("English", calls[0][2].name)
 
     def test_second_operation_and_close_are_rejected_while_busy(self) -> None:
@@ -812,10 +818,11 @@ class WebviewBridgeTests(unittest.TestCase):
             )
 
             response = bridge.browse("auto_output")
+            expected_initial_directory = str((base / "existing").resolve())
 
         self.assertTrue(response["ok"])
         self.assertEqual("folder", requests[0].kind)
-        self.assertEqual(str(base / "existing"), requests[0].initial_directory)
+        self.assertEqual(expected_initial_directory, requests[0].initial_directory)
         self.assertEqual(
             r"chosen\source.paloc.translation-delta.vi.json",
             response["state"]["fields"]["auto_output"],

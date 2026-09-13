@@ -118,7 +118,7 @@ class TranslationUIServiceTests(TestCase):
                     "max_batch_characters": 24000,
                     "concurrency": 3,
                     "timeout_seconds": 180.0,
-                    "config_path": str(config_path),
+                    "config_path": str(config_path.resolve()),
                 },
                 snapshot["state"]["configuration"],
             )

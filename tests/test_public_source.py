@@ -58,6 +58,21 @@ class PublicSourceTests(unittest.TestCase):
         self.assertIn(r".\BUILD_EXE.cmd", readme_vi)
         self.assertIn(r".\BUILD_EXE.cmd", readme_en)
 
+    def test_build_requirements_include_complete_pytest_closure(self) -> None:
+        project_root = Path(__file__).resolve().parent.parent
+        requirements = (project_root / "requirements-build.txt").read_text(
+            encoding="utf-8"
+        )
+
+        for requirement in (
+            "pytest==9.1.1",
+            "iniconfig==2.3.0",
+            "packaging==26.3",
+            "pluggy==1.6.0",
+            "pygments==2.21.0",
+        ):
+            self.assertIn(requirement, requirements.casefold())
+
     def test_clean_source_tree_has_no_violations(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)
