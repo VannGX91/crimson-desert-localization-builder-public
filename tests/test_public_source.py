@@ -46,15 +46,15 @@ class PublicSourceTests(unittest.TestCase):
 
         self.assertIn("requirements-build.txt", build_cmd)
         self.assertIn(r"scripts\build_onedir.py", build_cmd)
-        self.assertIn("release_onedir_v2.0.0", build_cmd)
-        self.assertIn('tags:\n      - "v2.0.0"', release_workflow)
+        self.assertIn("release_onedir_v2.0.1", build_cmd)
+        self.assertIn('tags:\n      - "v2.0.1"', release_workflow)
         self.assertIn("contents: write", release_workflow)
         self.assertIn("python scripts/build_onedir.py", release_workflow)
         self.assertIn("CrimsonDesertLocalizationBuilder-windows-x64.zip", release_workflow)
         self.assertIn("SHA256SUMS.txt", release_workflow)
         self.assertIn("gh release create", release_workflow)
         self.assertIn("branches:\n      - main", ci_workflow)
-        self.assertIn('__version__ = "2.0.0"', package_init)
+        self.assertIn('__version__ = "2.0.1"', package_init)
         self.assertIn(r".\BUILD_EXE.cmd", readme_vi)
         self.assertIn(r".\BUILD_EXE.cmd", readme_en)
 

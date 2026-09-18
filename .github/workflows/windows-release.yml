@@ -3,7 +3,7 @@ name: Build and publish Windows release
 on:
   push:
     tags:
-      - "v2.0.0"
+      - "v2.0.1"
 
 permissions:
   contents: write
@@ -84,7 +84,7 @@ jobs:
               --repo "$env:GITHUB_REPOSITORY" `
               --verify-tag `
               --title "Crimson Desert Localization Builder $env:GITHUB_REF_NAME" `
-              --notes "Windows x64 one-folder release. Extract the complete ZIP and keep _internal beside the executable."
+              --notes "Windows x64 one-folder release. Adds automatic support for legacy raw PALOC files and newer LZ4 PALOC containers. Extract the complete ZIP and keep _internal beside the executable."
           }
           if ($LASTEXITCODE -ne 0) {
             throw "GitHub release publication failed."

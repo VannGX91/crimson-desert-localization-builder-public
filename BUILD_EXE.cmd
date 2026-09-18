@@ -6,7 +6,7 @@ set "BUILD_ENV=%~dp0.build-venv"
 set "OUTPUT_ROOT=%~1"
 if not defined OUTPUT_ROOT (
     for /f %%I in ('powershell -NoProfile -Command "Get-Date -Format yyyyMMdd_HHmmss"') do set "BUILD_STAMP=%%I"
-    set "OUTPUT_ROOT=%~dp0..\release_onedir_v2.0.0_!BUILD_STAMP!"
+    set "OUTPUT_ROOT=%~dp0..\release_onedir_v2.0.1_!BUILD_STAMP!"
 )
 
 if not exist "%BUILD_ENV%\Scripts\python.exe" (

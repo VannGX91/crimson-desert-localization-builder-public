@@ -66,6 +66,7 @@ def build_multi_paloc_package(
     root: Path,
     package_folder: str = "0020",
     entries_by_paloc: dict[str, list[dict[str, str]]] | None = None,
+    paloc_lz4_container: bool = False,
 ) -> Path:
     package = root / package_folder
     package.mkdir(parents=True)
@@ -99,19 +100,36 @@ def build_multi_paloc_package(
     paz_data = bytearray()
     entry_records: list[tuple[str, int, int, int, int]] = []
     for index, (filename, entries) in enumerate(palocs.items(), start=1):
-        plaintext = json_data_to_paloc(
+        raw_paloc = json_data_to_paloc(
             {
                 "metadata": {"tail_bytes": f"{index:08x}"},
                 "entries": entries,
             }
         )
-        payload = encrypt(compress_lz4(plaintext), filename)
+        if paloc_lz4_container:
+            compressed_paloc = compress_lz4(raw_paloc)
+            header = b"paloc\x00\x00\x00\x00" + struct.pack(
+                "<II",
+                len(compressed_paloc),
+                len(raw_paloc),
+            )
+            plaintext = (
+                header
+                + (b"\x00" * (512 - len(header)))
+                + compressed_paloc
+            )
+            payload = encrypt(plaintext, filename)
+            flags = 0x00300000
+        else:
+            plaintext = raw_paloc
+            payload = encrypt(compress_lz4(plaintext), filename)
+            flags = 0x00020000
         aligned = (len(paz_data) + 15) & ~15
         paz_data += b"\x00" * (aligned - len(paz_data))
         offset = len(paz_data)
         paz_data += payload
         entry_records.append(
-            (filename, offset, len(payload), len(plaintext), 0x00020000)
+            (filename, offset, len(payload), len(plaintext), flags)
         )
     paz_data += b"\x00" * ((16 - len(paz_data) % 16) % 16)
     (package / "0.paz").write_bytes(paz_data)

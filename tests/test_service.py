@@ -276,6 +276,48 @@ class ServiceTests(unittest.TestCase):
             self.assertEqual(source_pamt, (source / "0.pamt").read_bytes())
             self.assertEqual(source_paz, (source / "0.paz").read_bytes())
 
+    def test_203_multi_paloc_unpack_then_repack_preserves_lz4_container(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            source = build_multi_paloc_package(
+                root / "source",
+                paloc_lz4_container=True,
+            )
+            source_pamt = (source / "0.pamt").read_bytes()
+            source_paz = (source / "0.paz").read_bytes()
+            json_path = root / "translation.json"
+
+            export_result = export_0020_to_json(source, json_path)
+            catalog = json.loads(json_path.read_text(encoding="utf-8"))
+
+            self.assertEqual(3, export_result.paloc_count)
+            self.assertTrue(
+                all(
+                    item["storage_format"] == "lz4-container-v1"
+                    for item in catalog["metadata"]["palocs"]
+                )
+            )
+            catalog["entries"][0]["translation"] = "Xin chào 2.03"
+            json_path.write_text(
+                json.dumps(catalog, ensure_ascii=False, indent=4),
+                encoding="utf-8",
+            )
+
+            result = build_0020_from_json(source, json_path, root / "output")
+            output = result.output_0020
+            output_index = parse_pamt(output / "0.pamt", output)
+            self.assertTrue(
+                all(entry.compression_type == 0 for entry in output_index.entries)
+            )
+
+            wrapped = extract_archive_entry(output, "gamedata/aidialog.paloc")
+            self.assertTrue(wrapped.startswith(b"paloc\x00\x00\x00\x00"))
+            rebuilt = paloc_to_json_data(wrapped)
+            self.assertEqual("lz4-container-v1", rebuilt["metadata"]["storage_format"])
+            self.assertEqual("Xin chào 2.03", rebuilt["entries"][0]["translation"])
+            self.assertEqual(source_pamt, (source / "0.pamt").read_bytes())
+            self.assertEqual(source_paz, (source / "0.paz").read_bytes())
+
     def test_legacy_json_migrates_by_identity_into_multi_paloc_package(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

@@ -68,7 +68,7 @@ from .translation_merge import (
 from .ui_model import WEBVIEW_WORKFLOW_PAGES, webview_page_by_key
 
 
-APPLICATION_VERSION = "2.0.0"
+APPLICATION_VERSION = "2.0.1"
 LOGGER = logging.getLogger(__name__)
 WEB_THEMES = (
     {"key": "crimson", "name": "Crimson Glass", "description": "plum / violet"},

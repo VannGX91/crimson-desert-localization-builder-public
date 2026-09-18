@@ -64,13 +64,14 @@ def palocs_to_catalog(
     manifest: list[dict[str, Any]] = []
     for paloc, document in documents:
         metadata = document["metadata"]
-        manifest.append(
-            {
-                "path": paloc.path,
-                "entry_count": len(document["entries"]),
-                "tail_bytes": metadata["tail_bytes"],
-            }
-        )
+        manifest_item = {
+            "path": paloc.path,
+            "entry_count": len(document["entries"]),
+            "tail_bytes": metadata["tail_bytes"],
+        }
+        if "storage_format" in metadata:
+            manifest_item["storage_format"] = metadata["storage_format"]
+        manifest.append(manifest_item)
         entries.extend(dict(entry) for entry in document["entries"])
     return {
         "metadata": {
