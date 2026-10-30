@@ -113,6 +113,41 @@ def _read_named_nodes(data: bytes, start: int, size: int) -> dict[int, tuple[int
     return nodes
 
 
+def _read_compact_nodes(data: bytes, start: int, size: int) -> dict[int, tuple[int, str]]:
+    """Read the newer path-node layout used by recent game patches.
+
+    Each node is ``[u8 parent_distance][u8 name_length][name]`` where
+    ``parent_distance`` is the number of bytes between this node and its parent
+    node (0 means "no parent"). Names are prefix fragments, so a full path is the
+    concatenation of the whole parent chain.
+    """
+    end = start + size
+    _require_range(data, start, size, "path nodes")
+    nodes: dict[int, tuple[int, str]] = {}
+    offset = start
+    while offset < end:
+        relative_offset = offset - start
+        _require_range(data, offset, 2, "path node")
+        distance = data[offset]
+        name_length = data[offset + 1]
+        _require_range(data, offset + 2, name_length, "path node name")
+        if distance == 0:
+            parent = 0xFFFFFFFF
+        else:
+            parent = relative_offset - distance
+            if parent < 0 or parent not in nodes:
+                raise ArchiveFormatError("0.pamt path node references an unknown parent.")
+        try:
+            name = data[offset + 2 : offset + 2 + name_length].decode("utf-8")
+        except UnicodeDecodeError as error:
+            raise ArchiveFormatError(f"Invalid UTF-8 in 0.pamt path node: {error}.") from error
+        nodes[relative_offset] = (parent, name)
+        offset += 2 + name_length
+    if offset != end:
+        raise ArchiveFormatError("0.pamt path node section has an invalid length.")
+    return nodes
+
+
 def _build_node_path(nodes: dict[int, tuple[int, str]], node_reference: int) -> str:
     parts: list[str] = []
     current = node_reference
@@ -161,14 +196,18 @@ def parse_pamt(pamt_path: Path, paz_directory: Path) -> PamtIndex:
 
     folder_size = _read_uint32(data, offset, "folder section length")
     offset += 4
-    folder_nodes = _read_named_nodes(data, offset, folder_size)
+    # Older packages store each node as [u32 parent][u8 length][name] with
+    # 0xFFFFFFFF marking the root. Newer packages use the compact layout.
+    compact = _read_uint32(data, offset, "folder node") != 0xFFFFFFFF
+    read_nodes = _read_compact_nodes if compact else _read_named_nodes
+    folder_nodes = read_nodes(data, offset, folder_size)
     offset += folder_size
     root_names = [name for parent, name in folder_nodes.values() if parent == 0xFFFFFFFF]
     folder_prefix = root_names[-1] if root_names else ""
 
     node_size = _read_uint32(data, offset, "node section length")
     offset += 4
-    nodes = _read_named_nodes(data, offset, node_size)
+    nodes = read_nodes(data, offset, node_size)
     offset += node_size
 
     folder_count = _read_uint32(data, offset, "folder record count")
@@ -177,13 +216,30 @@ def parse_pamt(pamt_path: Path, paz_directory: Path) -> PamtIndex:
     _require_range(data, offset, folder_record_size, "folder records")
     offset += folder_record_size
 
-    remaining = len(data) - offset
-    if remaining == 0 or remaining % 20 != 0:
+    # The u32 just before the file records is the file count.
+    records_end = len(data)
+    extensions: list[str] = []
+    if (len(data) - offset) % 20 != 0:
+        # Newer packages append an extension table after the file records:
+        # [u32 size][NUL separated strings]; flags >> 24 selects the extension.
+        file_count = _read_uint32(data, offset - 4, "file record count")
+        records_end = offset + file_count * 20
+        _require_range(data, offset, file_count * 20, "file records")
+        table_size = _read_uint32(data, records_end, "extension table length")
+        if table_size != len(data) - records_end - 4:
+            raise ArchiveFormatError("0.pamt file record section has an invalid length.")
+        try:
+            extensions = data[records_end + 4 :].decode("utf-8").split("\0")
+        except UnicodeDecodeError as error:
+            raise ArchiveFormatError(
+                f"Invalid UTF-8 in 0.pamt extension table: {error}."
+            ) from error
+    if records_end == offset:
         raise ArchiveFormatError("0.pamt file record section has an invalid length.")
 
     entries: list[PamtEntry] = []
     pamt_base_index = int(pamt_path.stem)
-    while offset < len(data):
+    while offset < records_end:
         record_offset = offset
         node_reference, paz_offset, comp_size, orig_size, flags = struct.unpack_from(
             "<IIIII", data, offset
@@ -193,6 +249,13 @@ def parse_pamt(pamt_path: Path, paz_directory: Path) -> PamtIndex:
         if paz_index >= paz_count:
             raise ArchiveFormatError(f"Entry references invalid PAZ index {paz_index}.")
         node_path = _build_node_path(nodes, node_reference)
+        extension_index = flags >> 24
+        if extension_index:
+            if extension_index >= len(extensions):
+                raise ArchiveFormatError(
+                    f"Entry references invalid extension index {extension_index}."
+                )
+            node_path += extensions[extension_index]
         full_path = f"{folder_prefix}/{node_path}" if folder_prefix else node_path
         paz_number = pamt_base_index + paz_index
         entries.append(
