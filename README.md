@@ -1,5 +1,6 @@
 # Crimson Desert Localization Builder
 
+makasih sama mas sioren.
 [English](README_ENG.md)
 
 Công cụ Windows hỗ trợ xuất, chỉnh sửa, dịch, đóng gói và cài đặt dữ liệu
