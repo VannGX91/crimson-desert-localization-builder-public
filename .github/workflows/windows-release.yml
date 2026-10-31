@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     tags:
+      - "v2.0.1"
       - "v*"
 
 permissions:
@@ -19,18 +20,24 @@ jobs:
     timeout-minutes: 60
 
     steps:
-      - name: Check out source
-        uses: actions/checkout@v4
+      - name: Check out tagged source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: Install locked build dependencies
         run: python -m pip install --no-deps -r requirements-build.txt
+
+      - name: Verify tag and application version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        run: |
+          python -c "import os, crimson0020; from crimson0020.webview_bridge import APPLICATION_VERSION; assert crimson0020.__version__ == APPLICATION_VERSION; assert os.environ['GITHUB_REF_NAME'] == f'v{APPLICATION_VERSION}'"
 
       - name: Verify public source contents
         run: python scripts/verify_public_source.py .
@@ -81,7 +88,7 @@ jobs:
               --repo "$env:GITHUB_REPOSITORY" `
               --verify-tag `
               --title "Crimson Desert Localization Builder $env:GITHUB_REF_NAME" `
-              --notes "Windows x64 one-folder release."
+              --notes "Windows x64 one-folder release. Adds automatic support for legacy raw PALOC files and newer LZ4 PALOC containers. Extract the complete ZIP and keep _internal beside the executable."
           }
           if ($LASTEXITCODE -ne 0) {
             throw "GitHub release publication failed."
