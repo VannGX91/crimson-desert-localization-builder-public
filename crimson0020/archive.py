@@ -226,10 +226,14 @@ def parse_pamt(pamt_path: Path, paz_directory: Path) -> PamtIndex:
         records_end = offset + file_count * 20
         _require_range(data, offset, file_count * 20, "file records")
         table_size = _read_uint32(data, records_end, "extension table length")
-        if table_size != len(data) - records_end - 4:
+        # Bytes after the table (seen in some repacked packages) are preserved
+        # untouched and covered by the header checksum.
+        if table_size > len(data) - records_end - 4:
             raise ArchiveFormatError("0.pamt file record section has an invalid length.")
         try:
-            extensions = data[records_end + 4 :].decode("utf-8").split("\0")
+            extensions = data[records_end + 4 : records_end + 4 + table_size].decode(
+                "utf-8"
+            ).split("\0")
         except UnicodeDecodeError as error:
             raise ArchiveFormatError(
                 f"Invalid UTF-8 in 0.pamt extension table: {error}."
