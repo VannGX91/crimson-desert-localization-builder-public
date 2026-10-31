@@ -124,3 +124,47 @@ def patch_folder_crc(
         pa_checksum(patched[ENTRY_TABLE_OFFSET:]),
     )
     return bytes(patched)
+
+
+COMPACT_TRAILER_SIZE = 64
+COMPACT_ENTRY_TABLE_OFFSET = 4
+
+
+def is_compact_papgt(data: bytes | bytearray) -> bool:
+    """Recognise the game 2.04 ``0.papgt`` layout without interpreting it.
+
+    That layout is ``[u32][N x 12-byte entries][u32 string size][names][64 bytes]``.
+    Its checksum scheme is not understood, so callers must leave such a file
+    unchanged. The check is strict: every entry must point at a NUL-terminated
+    UTF-8 name and the sizes must add up exactly.
+    """
+    total = len(data)
+    if total < COMPACT_ENTRY_TABLE_OFFSET + 4 + COMPACT_TRAILER_SIZE:
+        return False
+    maximum = (total - COMPACT_ENTRY_TABLE_OFFSET - 4 - COMPACT_TRAILER_SIZE) // ENTRY_SIZE
+    for count in range(1, maximum + 1):
+        size_offset = COMPACT_ENTRY_TABLE_OFFSET + count * ENTRY_SIZE
+        string_size = struct.unpack_from("<I", data, size_offset)[0]
+        if size_offset + 4 + string_size + COMPACT_TRAILER_SIZE != total:
+            continue
+        strings = bytes(data[size_offset + 4 : size_offset + 4 + string_size])
+        if not strings.endswith(b"\x00"):
+            return False
+        names: set[bytes] = set()
+        for index in range(count):
+            _flags, name_offset, _crc = struct.unpack_from(
+                "<III", data, COMPACT_ENTRY_TABLE_OFFSET + index * ENTRY_SIZE
+            )
+            if name_offset >= string_size:
+                return False
+            end = strings.find(b"\x00", name_offset)
+            name = strings[name_offset:end]
+            if end < 0 or not name or name in names:
+                return False
+            try:
+                name.decode("utf-8")
+            except UnicodeDecodeError:
+                return False
+            names.add(name)
+        return True
+    return False
