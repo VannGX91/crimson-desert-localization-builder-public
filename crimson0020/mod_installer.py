@@ -25,7 +25,12 @@ from .installer import (
     uninstall_0020,
 )
 from .languages import LanguageSpec
-from .metadata import MetadataFormatError, parse_papgt, patch_folder_crc
+from .metadata import (
+    MetadataFormatError,
+    is_compact_papgt,
+    parse_papgt,
+    patch_folder_crc,
+)
 from .service import normalize_localization_folder
 
 
@@ -176,14 +181,17 @@ def _normalize_game_root(
     if not game_root.is_dir() or not metadata_path.is_file():
         raise GamePathError("The game folder must contain meta\\0.papgt.")
     if plan is not None:
-        metadata = parse_papgt(metadata_path.read_bytes())
+        metadata_bytes = metadata_path.read_bytes()
+        # Game 2.04 changed 0.papgt; it is validated structurally and left as is.
+        metadata = None if is_compact_papgt(metadata_bytes) else parse_papgt(metadata_bytes)
         for package in plan:
             game_package = game_root / package.folder_name
             if not game_package.is_dir():
                 raise GamePathError(
                     f"The game folder must contain {package.folder_name}."
                 )
-            metadata.entry_for(package.folder_name)
+            if metadata is not None:
+                metadata.entry_for(package.folder_name)
             for filename in package.filenames:
                 if not (game_package / filename).is_file():
                     raise GamePathError(
@@ -208,8 +216,9 @@ def _write_manifest(
     plan: tuple[PackageInstallPlan, ...],
 ) -> None:
     backup_root = path.parent
-    metadata_index = parse_papgt(
-        (backup_root / "meta" / "0.papgt").read_bytes()
+    backup_metadata = (backup_root / "meta" / "0.papgt").read_bytes()
+    metadata_index = (
+        None if is_compact_papgt(backup_metadata) else parse_papgt(backup_metadata)
     )
     folders = []
     for package in plan:
@@ -218,7 +227,11 @@ def _write_manifest(
             {
                 "name": package.folder_name,
                 "pamt_crc": _pamt_crc(backup_package),
-                "metadata_crc": metadata_index.entry_for(package.folder_name).crc,
+                "metadata_crc": (
+                    0
+                    if metadata_index is None
+                    else metadata_index.entry_for(package.folder_name).crc
+                ),
                 "files": [
                     {
                         "name": filename,
@@ -366,7 +379,9 @@ def _manifest_plan(backup: Path) -> tuple[PackageInstallPlan, ...]:
     metadata = backup / "meta" / "0.papgt"
     if not metadata.is_file():
         raise BackupFormatError(f"Backup is missing meta\\0.papgt: {backup}")
-    parse_papgt(metadata.read_bytes())
+    backup_metadata = metadata.read_bytes()
+    if not is_compact_papgt(backup_metadata):
+        parse_papgt(backup_metadata)
     return tuple(plan)
 
 
@@ -417,6 +432,8 @@ def _patch_metadata(
     metadata: bytes,
     plan: tuple[PackageInstallPlan, ...],
 ) -> bytes:
+    if is_compact_papgt(metadata):
+        return metadata
     patched = metadata
     for package in plan:
         patched = patch_folder_crc(
@@ -463,6 +480,8 @@ def _verify_operation(
     installed_metadata = metadata_path.read_bytes()
     if installed_metadata != expected_metadata:
         raise MetadataFormatError("Installed 0.papgt changed outside permitted fields.")
+    if is_compact_papgt(installed_metadata):
+        return int.from_bytes(installed_metadata[:4], "little")
     index = parse_papgt(installed_metadata)
     for package in source_plan:
         if index.entry_for(package.folder_name).crc != package.metadata_crc:
